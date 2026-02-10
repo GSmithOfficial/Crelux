@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Submission Template Converter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f1117;
+      --surface:   #1a1d27;
+      --surface2:  #232733;
+      --border:    #2e3345;
+      --text:      #e2e4eb;
+      --text-dim:  #8b8fa3;
+      --accent:    #5b9cf5;
+      --accent-bg: rgba(91,156,245,0.08);
+      --green:     #4ade80;
+      --green-bg:  rgba(74,222,128,0.08);
+      --amber:     #f59e0b;
+      --amber-bg:  rgba(245,158,11,0.08);
+      --red:       #f87171;
+      --mono:      'JetBrains Mono', monospace;
+      --sans:      'DM Sans', system-ui, sans-serif;
+      --radius:    8px;
+    }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+
+    /* ── Layout ───────────────────────────────────────────── */
+    .app {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem 2rem 4rem;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    header .icon {
+      width: 40px; height: 40px;
+      background: var(--accent-bg);
+      border: 1px solid rgba(91,156,245,0.2);
+      border-radius: 10px;
+      display: grid; place-items: center;
+      font-size: 1.2rem;
+    }
+
+    header h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    header p {
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      margin-top: 2px;
+    }
+
+    /* ── Controls Bar ─────────────────────────────────────── */
+    .controls {
+      display: flex;
+      gap: 1rem;
+      align-items: stretch;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .control-group label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-dim);
+    }
+
+    /* ── Dropzone ─────────────────────────────────────────── */
+    .dropzone {
+      flex: 1;
+      min-width: 280px;
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+
+    .dropzone:hover, .dropzone.dragover {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .dropzone.has-file {
+      border-style: solid;
+      border-color: var(--green);
+      background: var(--green-bg);
+    }
+
+    .dropzone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .dropzone .dz-icon { font-size: 1.4rem; }
+    .dropzone .dz-text { font-size: 0.9rem; color: var(--text-dim); }
+    .dropzone.has-file .dz-text { color: var(--green); }
+
+    /* ── Select / Inputs ──────────────────────────────────── */
+    select, .info-box {
+      font-family: var(--sans);
+      font-size: 0.9rem;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.6rem 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    select:focus { border-color: var(--accent); }
+
+    .info-box {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      min-width: 120px;
+      display: flex;
+      align-items: center;
+      color: var(--accent);
+      background: var(--accent-bg);
+      border-color: rgba(91,156,245,0.2);
+    }
+
+    .info-box.empty { color: var(--text-dim); background: var(--surface); border-color: var(--border); }
+
+    /* ── Status / Loader ──────────────────────────────────── */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .status-bar.loading { background: var(--amber-bg); color: var(--amber); }
+    .status-bar.ready   { background: var(--green-bg); color: var(--green); }
+    .status-bar.error   { background: rgba(248,113,113,0.08); color: var(--red); }
+
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Preview Table ────────────────────────────────────── */
+    .table-wrapper {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      white-space: nowrap;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      background: var(--surface2);
+      font-weight: 600;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+      padding: 0.7rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+
+    tbody td {
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 0.78rem;
+    }
+
+    tbody tr:hover { background: rgba(91,156,245,0.03); }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* Truncate long SMILES */
+    .smiles-cell {
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: help;
+    }
+
+    /* Per-row salt select */
+    .salt-select {
+      font-family: var(--sans);
+      font-size: 0.78rem;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.3rem 0.5rem;
+      outline: none;
+      cursor: pointer;
+    }
+    .salt-select:focus { border-color: var(--accent); }
+
+    .mw-shipped { color: var(--accent); }
+    .mw-na      { color: var(--text-dim); font-style: italic; }
+
+    /* ── Action Buttons ───────────────────────────────────── */
+    .actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.25rem;
+    }
+
+    .btn {
+      font-family: var(--sans);
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0.65rem 1.5rem;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-primary:hover:not(:disabled) { opacity: 0.85; }
+    .btn-secondary:hover:not(:disabled) { border-color: var(--text-dim); }
+
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--green);
+      color: #000;
+      font-weight: 600;
+      font-size: 0.85rem;
+      padding: 0.65rem 1.5rem;
+      border-radius: var(--radius);
+      opacity: 0;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      pointer-events: none;
+      z-index: 100;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* ── Row counter ──────────────────────────────────────── */
+    .row-count {
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      margin-top: 0.75rem;
+    }
+
+    /* ── Hidden ────────────────────────────────────────────── */
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Header -->
+  <header>
+    <div class="icon">⚗️</div>
+    <div>
+      <h1>Submission Template Converter</h1>
+      <p>Convert candidate TSV exports into the crystallography submission format</p>
+    </div>
+  </header>
+
+  <!-- RDKit loading status -->
+  <div id="rdkitStatus" class="status-bar loading">
+    <div class="spinner"></div>
+    <span>Loading RDKit molecular engine…</span>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <div class="control-group" style="flex:1; min-width:280px;">
+      <label>TSV File</label>
+      <div class="dropzone" id="dropzone">
+        <span class="dz-icon">📄</span>
+        <span class="dz-text" id="dzText">Drop TSV file here or click to browse</span>
+        <input type="file" id="fileInput" accept=".tsv,.txt,.csv">
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label>Supplier</label>
+      <select id="supplierSelect">
+        <option value="WuXi OTS Solution">WuXi OTS Solution</option>
+        <option value="WuXi OTS Solid">WuXi OTS Solid</option>
+        <option value="WuXi Galaxi">WuXi Galaxi</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <label>Target (auto-detected)</label>
+      <div class="info-box empty" id="targetDisplay">—</div>
+    </div>
+  </div>
+
+  <!-- Preview Table -->
+  <div id="previewSection" class="hidden">
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Target</th>
+            <th>cpd ID</th>
+            <th>Supplier</th>
+            <th>Lot ID (SMILES)</th>
+            <th>MW Free [g/mol]</th>
+            <th>Salt Form</th>
+            <th>MW Shipped [g/mol]</th>
+            <th>Conc. [mM]</th>
+            <th>Vol. [µl]</th>
+            <th>Solvent</th>
+          </tr>
+        </thead>
+        <tbody id="previewBody"></tbody>
+      </table>
+    </div>
+    <div class="row-count" id="rowCount"></div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="copyBtn" disabled>
+        📋 Copy for Template (Tab-separated)
+      </button>
+      <button class="btn btn-secondary" id="copyAllColsBtn" disabled>
+        📋 Copy All Columns (A–S)
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Copied to clipboard!</div>
+
+<script>
+  // ══════════════════════════════════════════════════════════
+  //  SALT DEFINITIONS — Top salts in drug discovery
+  //  MW delta = mass added to the free compound
+  // ══════════════════════════════════════════════════════════
+  const SALTS = [
+    { name: "Free base",               delta: 0       },
+    { name: "Hydrochloride (HCl)",      delta: 36.461  },
+    { name: "Trifluoroacetate (TFA)",   delta: 114.023 },
+    { name: "Acetate",                  delta: 60.052  },
+    { name: "Mesylate",                 delta: 96.106  },
+    { name: "Tosylate",                 delta: 172.202 },
+    { name: "Maleate",                  delta: 116.072 },
+    { name: "Sulfate",                  delta: 98.079  },
+    { name: "Citrate",                  delta: 192.124 },
+    { name: "Tartrate",                 delta: 150.087 },
+    { name: "Besylate",                 delta: 158.175 },
+  ];
+
+  // ══════════════════════════════════════════════════════════
+  //  STATE
+  // ══════════════════════════════════════════════════════════
+  let RDKitModule = null;
+  let parsedRows = [];     // { smiles, id, freeMW, saltIndex }
+  let detectedTarget = "";
+
+  // ══════════════════════════════════════════════════════════
+  //  RDKIT INIT
+  // ══════════════════════════════════════════════════════════
+  const rdkitScript = document.createElement("script");
+  rdkitScript.src = "https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.js";
+  rdkitScript.onload = () => {
+    window.initRDKitModule().then(mod => {
+      RDKitModule = mod;
+      const el = document.getElementById("rdkitStatus");
+      el.className = "status-bar ready";
+      el.innerHTML = "✓ RDKit ready — molecular weight calculations enabled";
+      // If file was loaded before RDKit, recalculate
+      if (parsedRows.length > 0) recalcAllMW();
+    });
+  };
+  document.head.appendChild(rdkitScript);
+
+  // ══════════════════════════════════════════════════════════
+  //  FILENAME PARSING — extract target between last _ and -selected
+  // ══════════════════════════════════════════════════════════
+  function extractTarget(filename) {
+    // Pattern: ..._{TARGET}-selected-...
+    // The filename may have had spaces replaced with underscores
+    // Example: "candidates-Boltz_Validation__MALT1-selected-2026-..."
+    const match = filename.match(/_([^_]+?)-selected/i);
+    return match ? match[1] : "UNKNOWN";
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  TSV PARSING
+  // ══════════════════════════════════════════════════════════
+  function parseTSV(text) {
+    const lines = text.trim().split("\n");
+    if (lines.length < 2) return [];
+
+    const headers = lines[0].split("\t").map(h => h.trim());
+    const molIdx = headers.indexOf("Molecule");
+    const idIdx  = headers.indexOf("Id");
+
+    if (molIdx === -1 || idIdx === -1) {
+      alert("TSV must contain 'Molecule' and 'Id' columns.");
+      return [];
+    }
+
+    const rows = [];
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split("\t");
+      if (cols.length <= Math.max(molIdx, idIdx)) continue;
+      rows.push({
+        smiles:    cols[molIdx].trim(),
+        id:        cols[idIdx].trim(),
+        freeMW:    null,   // calculated later
+        saltIndex: 0,      // default: Free base
+      });
+    }
+    return rows;
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  MW CALCULATION
+  // ══════════════════════════════════════════════════════════
+  function calcMW(smiles) {
+    if (!RDKitModule) return null;
+    try {
+      const mol = RDKitModule.get_mol(smiles);
+      if (!mol) return null;
+      const desc = JSON.parse(mol.get_descriptors());
+      const mw = parseFloat(desc.exactmw);
+      mol.delete();
+      return isNaN(mw) ? null : mw;
+    } catch {
+      return null;
+    }
+  }
+
+  function recalcAllMW() {
+    parsedRows.forEach(row => {
+      row.freeMW = calcMW(row.smiles);
+    });
+    renderTable();
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  RENDERING
+  // ══════════════════════════════════════════════════════════
+  function getSupplier() {
+    return document.getElementById("supplierSelect").value;
+  }
+
+  function isSolution() {
+    return getSupplier() === "WuXi OTS Solution";
+  }
+
+  function renderTable() {
+    const tbody = document.getElementById("previewBody");
+    const supplier = getSupplier();
+    const solution = isSolution();
+
+    tbody.innerHTML = parsedRows.map((row, i) => {
+      const freeMW   = row.freeMW !== null ? row.freeMW.toFixed(2) : "—";
+      const salt     = SALTS[row.saltIndex];
+      const shipped  = row.saltIndex === 0
+        ? '<span class="mw-na">—</span>'
+        : (row.freeMW !== null
+            ? `<span class="mw-shipped">${(row.freeMW + salt.delta).toFixed(2)}</span>`
+            : "—");
+
+      // Build salt dropdown
+      const saltOpts = SALTS.map((s, si) =>
+        `<option value="${si}" ${si === row.saltIndex ? "selected" : ""}>${s.name}</option>`
+      ).join("");
+
+      return `<tr>
+        <td style="color:var(--text-dim)">${i + 1}</td>
+        <td>${detectedTarget}</td>
+        <td>${row.id}</td>
+        <td>${supplier}</td>
+        <td class="smiles-cell" title="${row.smiles}">${row.smiles}</td>
+        <td>${freeMW}</td>
+        <td><select class="salt-select" data-row="${i}" onchange="onSaltChange(this)">${saltOpts}</select></td>
+        <td>${shipped}</td>
+        <td>${solution ? "10 mM" : ""}</td>
+        <td>${solution ? "50" : ""}</td>
+        <td>DMSO</td>
+      </tr>`;
+    }).join("");
+
+    document.getElementById("rowCount").textContent = `${parsedRows.length} compounds loaded`;
+    document.getElementById("copyBtn").disabled = false;
+    document.getElementById("copyAllColsBtn").disabled = false;
+  }
+
+  function onSaltChange(selectEl) {
+    const rowIdx = parseInt(selectEl.dataset.row);
+    parsedRows[rowIdx].saltIndex = parseInt(selectEl.value);
+    renderTable();
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  COPY TO CLIPBOARD
+  //  Columns A–L matching the submission template
+  // ══════════════════════════════════════════════════════════
+  function buildClipboardData(allColumns) {
+    const supplier = getSupplier();
+    const solution = isSolution();
+
+    const rows = parsedRows.map(row => {
+      const salt    = SALTS[row.saltIndex];
+      const freeMW  = row.freeMW !== null ? row.freeMW.toFixed(2) : "";
+      const shipMW  = row.saltIndex === 0 ? ""
+                      : (row.freeMW !== null ? (row.freeMW + salt.delta).toFixed(2) : "");
+
+      // A: Target, B: cpd ID, C: crelux code (blank), D: supplier,
+      // E: lot ID, F: container ID (blank), G: MW free, H: MW shipped,
+      // I: quantity (blank), J: concentration, K: volume, L: solvent
+      const coreColumns = [
+        detectedTarget,          // A: Target
+        row.id,                  // B: cpd ID
+        "",                      // C: crelux code
+        supplier,                // D: supplier
+        row.smiles,              // E: lot ID (SMILES)
+        "",                      // F: container ID
+        freeMW,                  // G: MW free compound
+        shipMW,                  // H: MW shipped isoform
+        "",                      // I: quantity
+        solution ? "10 mM" : "", // J: concentration
+        solution ? "50" : "",    // K: volume
+        "DMSO",                  // L: recommended solvent
+      ];
+
+      if (allColumns) {
+        // M–S: 7 more blank columns
+        return [...coreColumns, "", "", "", "", "", "", ""].join("\t");
+      }
+      return coreColumns.join("\t");
+    });
+
+    return rows.join("\n");
+  }
+
+  function copyToClipboard(allCols) {
+    const data = buildClipboardData(allCols);
+    navigator.clipboard.writeText(data).then(() => {
+      showToast(allCols ? "All columns A–S copied!" : "Columns A–L copied!");
+    });
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 2000);
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  FILE HANDLING
+  // ══════════════════════════════════════════════════════════
+  function handleFile(file) {
+    if (!file) return;
+
+    // Update dropzone
+    const dz = document.getElementById("dropzone");
+    const dzText = document.getElementById("dzText");
+    dz.classList.add("has-file");
+    dzText.textContent = file.name;
+
+    // Extract target from filename
+    detectedTarget = extractTarget(file.name);
+    const targetEl = document.getElementById("targetDisplay");
+    targetEl.textContent = detectedTarget;
+    targetEl.classList.toggle("empty", detectedTarget === "UNKNOWN");
+
+    // Read and parse TSV
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      parsedRows = parseTSV(e.target.result);
+      if (parsedRows.length === 0) return;
+
+      // Calculate MW if RDKit is ready
+      if (RDKitModule) recalcAllMW();
+
+      document.getElementById("previewSection").classList.remove("hidden");
+      renderTable();
+    };
+    reader.readAsText(file);
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  EVENT LISTENERS
+  // ══════════════════════════════════════════════════════════
+  const fileInput = document.getElementById("fileInput");
+  const dropzone  = document.getElementById("dropzone");
+
+  fileInput.addEventListener("change", (e) => handleFile(e.target.files[0]));
+
+  dropzone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropzone.classList.add("dragover");
+  });
+  dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
+  dropzone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropzone.classList.remove("dragover");
+    handleFile(e.dataTransfer.files[0]);
+  });
+
+  // Re-render when supplier changes (affects Conc / Vol columns)
+  document.getElementById("supplierSelect").addEventListener("change", () => {
+    if (parsedRows.length > 0) renderTable();
+  });
+
+  // Copy buttons
+  document.getElementById("copyBtn").addEventListener("click", () => copyToClipboard(false));
+  document.getElementById("copyAllColsBtn").addEventListener("click", () => copyToClipboard(true));
+</script>
+
+</body>
+</html>
