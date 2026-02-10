@@ -80,6 +80,7 @@
       gap: 1rem;
       align-items: stretch;
       flex-wrap: wrap;
+      margin-top: 1rem;
       margin-bottom: 1.5rem;
     }
 
@@ -171,7 +172,7 @@
       padding: 0.75rem 1rem;
       border-radius: var(--radius);
       font-size: 0.85rem;
-      margin-bottom: 1.5rem;
+      margin-bottom: 0.5rem;
     }
 
     .status-bar.loading { background: var(--amber-bg); color: var(--amber); }
@@ -347,9 +348,13 @@
   </div>
 
   <!-- Stock library status -->
-  <div id="stockStatus" class="status-bar loading">
+  <div id="stockSolutionStatus" class="status-bar loading">
     <div class="spinner"></div>
-    <span>Waiting for RDKit to load stock library…</span>
+    <span>Waiting for RDKit to load Solution stock…</span>
+  </div>
+  <div id="stockSolidStatus" class="status-bar loading">
+    <div class="spinner"></div>
+    <span>Waiting for RDKit to load Solid stock…</span>
   </div>
 
   <!-- Controls -->
@@ -385,7 +390,8 @@
         <thead>
           <tr>
             <th>#</th>
-            <th>In Stock</th>
+            <th>Solution</th>
+            <th>Solid</th>
             <th>Target</th>
             <th>cpd ID</th>
             <th>Supplier</th>
@@ -442,9 +448,10 @@
   //  STATE
   // ══════════════════════════════════════════════════════════
   let RDKitModule = null;
-  let parsedRows = [];     // { smiles, id, freeMW, saltIndex, canonSmiles, inStock }
+  let parsedRows = [];     // { smiles, id, freeMW, saltIndex, canonSmiles, inSolution, inSolid }
   let detectedTarget = "";
-  let stockSet = null;     // Set of canonical SMILES from WuXi OTS stock
+  let solutionSet = null;  // Set of canonical SMILES from WuXi OTS Solution stock
+  let solidSet = null;     // Set of canonical SMILES from WuXi OTS Solid stock
 
   // ══════════════════════════════════════════════════════════
   //  RDKIT INIT + STOCK FILE LOADING
@@ -454,34 +461,38 @@
   rdkitScript.onload = () => {
     window.initRDKitModule().then(mod => {
       RDKitModule = mod;
-      updateStatusBar("rdkitStatus", "ready", "✓ RDKit ready — loading stock library…");
-      loadStockFile();
+      updateStatusBar("rdkitStatus", "ready", "✓ RDKit ready");
+      loadStockFiles();
       // If file was loaded before RDKit, recalculate
       if (parsedRows.length > 0) recalcAllMW();
     });
   };
   document.head.appendChild(rdkitScript);
 
-  // Load pre-canonicalized WuXi OTS stock SMILES
-  function loadStockFile() {
-    updateStatusBar("stockStatus", "loading", "Loading WuXi OTS stock library (137K compounds)…");
-    fetch("wuxi_ots_stock_canonical.txt")
-      .then(r => {
-        if (!r.ok) throw new Error("Stock file not found");
-        return r.text();
-      })
-      .then(text => {
-        const lines = text.trim().split("\n");
-        stockSet = new Set(lines);
-        updateStatusBar("stockStatus", "ready",
-          `✓ Stock library loaded — ${stockSet.size.toLocaleString()} compounds`);
-        // Re-check if rows already loaded
-        if (parsedRows.length > 0) { checkAllStock(); renderTable(); }
-      })
-      .catch(() => {
-        updateStatusBar("stockStatus", "error",
-          "✗ Stock file not found — place wuxi_ots_stock_canonical.txt alongside index.html");
-      });
+  // Load pre-canonicalized WuXi OTS stock SMILES (Solution + Solid)
+  function loadStockFiles() {
+    const files = [
+      { name: "wuxi_ots_stock_canonical.txt",       label: "Solution", statusId: "stockSolutionStatus", setter: s => solutionSet = s },
+      { name: "wuxi_ots_solid_canonical.txt",  label: "Solid",    statusId: "stockSolidStatus",    setter: s => solidSet = s },
+    ];
+
+    files.forEach(({ name, label, statusId, setter }) => {
+      updateStatusBar(statusId, "loading", `Loading WuXi OTS ${label} stock…`);
+      fetch(name)
+        .then(r => { if (!r.ok) throw new Error(); return r.text(); })
+        .then(text => {
+          const lines = text.trim().split("\n");
+          const set = new Set(lines);
+          setter(set);
+          updateStatusBar(statusId, "ready",
+            `✓ ${label} stock loaded — ${set.size.toLocaleString()} compounds`);
+          if (parsedRows.length > 0) { checkAllStock(); renderTable(); }
+        })
+        .catch(() => {
+          updateStatusBar(statusId, "error",
+            `✗ ${label} stock file not found — place ${name} alongside index.html`);
+        });
+    });
   }
 
   function updateStatusBar(id, type, msg) {
@@ -526,10 +537,11 @@
       rows.push({
         smiles:      cols[molIdx].trim(),
         id:          cols[idIdx].trim(),
-        freeMW:      null,   // calculated later
-        saltIndex:   0,      // default: Free base
-        canonSmiles: null,   // canonical SMILES for stock matching
-        inStock:     false,  // whether in WuXi OTS stock
+        freeMW:      null,
+        saltIndex:   0,
+        canonSmiles: null,
+        inSolution:  false,
+        inSolid:     false,
       });
     }
     return rows;
@@ -566,15 +578,21 @@
   }
 
   function checkAllStock() {
-    if (!stockSet || !RDKitModule) return;
-    let matched = 0;
+    if (!RDKitModule) return;
+    let solMatch = 0, solidMatch = 0;
     parsedRows.forEach(row => {
-      row.canonSmiles = canonicalize(row.smiles);
-      row.inStock = row.canonSmiles ? stockSet.has(row.canonSmiles) : false;
-      if (row.inStock) matched++;
+      if (!row.canonSmiles) row.canonSmiles = canonicalize(row.smiles);
+      row.inSolution = solutionSet && row.canonSmiles ? solutionSet.has(row.canonSmiles) : false;
+      row.inSolid    = solidSet    && row.canonSmiles ? solidSet.has(row.canonSmiles)    : false;
+      if (row.inSolution) solMatch++;
+      if (row.inSolid)    solidMatch++;
     });
-    updateStatusBar("stockStatus", "ready",
-      `✓ Stock library loaded — ${matched}/${parsedRows.length} compounds found in WuXi OTS`);
+    if (solutionSet)
+      updateStatusBar("stockSolutionStatus", "ready",
+        `✓ Solution stock — ${solMatch}/${parsedRows.length} found`);
+    if (solidSet)
+      updateStatusBar("stockSolidStatus", "ready",
+        `✓ Solid stock — ${solidMatch}/${parsedRows.length} found`);
   }
 
   function recalcAllMW() {
@@ -610,19 +628,25 @@
             ? `<span class="mw-shipped">${(row.freeMW + salt.delta).toFixed(2)}</span>`
             : "—");
 
-      // Stock status indicator
-      const stockIcon = !stockSet ? '<span class="stock-pending" title="Stock not loaded">⏳</span>'
-                       : row.inStock ? '<span class="stock-yes" title="Found in WuXi OTS stock">✓</span>'
-                       : '<span class="stock-no" title="NOT in WuXi OTS stock">✗</span>';
+      // Stock status indicators
+      const solIcon = !solutionSet ? '<span class="stock-pending" title="Loading…">⏳</span>'
+                    : row.inSolution ? '<span class="stock-yes" title="In Solution stock">✓</span>'
+                    : '<span class="stock-no" title="Not in Solution stock">✗</span>';
+      const sldIcon = !solidSet ? '<span class="stock-pending" title="Loading…">⏳</span>'
+                    : row.inSolid ? '<span class="stock-yes" title="In Solid stock">✓</span>'
+                    : '<span class="stock-no" title="Not in Solid stock">✗</span>';
+
+      const notInEither = (solutionSet && !row.inSolution) && (solidSet && !row.inSolid);
 
       // Build salt dropdown
       const saltOpts = SALTS.map((s, si) =>
         `<option value="${si}" ${si === row.saltIndex ? "selected" : ""}>${s.name}</option>`
       ).join("");
 
-      return `<tr class="${stockSet && !row.inStock ? 'row-not-in-stock' : ''}">
+      return `<tr class="${notInEither ? 'row-not-in-stock' : ''}">
         <td style="color:var(--text-dim)">${i + 1}</td>
-        <td class="stock-cell">${stockIcon}</td>
+        <td class="stock-cell">${solIcon}</td>
+        <td class="stock-cell">${sldIcon}</td>
         <td>${detectedTarget}</td>
         <td>${row.id}</td>
         <td>${supplier}</td>
