@@ -396,6 +396,9 @@
       <button class="btn btn-secondary" id="copyAllColsBtn" disabled>
         📋 Copy All Columns (A–S)
       </button>
+      <button class="btn btn-secondary" id="exportCsvBtn" disabled>
+        💾 Export CSV
+      </button>
     </div>
   </div>
 </div>
@@ -558,6 +561,7 @@
     document.getElementById("rowCount").textContent = `${parsedRows.length} compounds loaded`;
     document.getElementById("copyBtn").disabled = false;
     document.getElementById("copyAllColsBtn").disabled = false;
+    document.getElementById("exportCsvBtn").disabled = false;
   }
 
   function onSaltChange(selectEl) {
@@ -682,6 +686,53 @@
   // Copy buttons
   document.getElementById("copyBtn").addEventListener("click", () => copyToClipboard(false));
   document.getElementById("copyAllColsBtn").addEventListener("click", () => copyToClipboard(true));
+
+  // CSV export
+  document.getElementById("exportCsvBtn").addEventListener("click", () => {
+    const headers = [
+      "Target","cpd ID","crelux code","supplier","lot ID",
+      "container ID","molecular weight of free compound [g/mol]",
+      "molecular weight of shipped isoform [g/mol]","quantity [mg]",
+      "concentration [mM]","volume [µl]","recommended solvent",
+      "Original plate name","plate position","comment",
+      "salt adduct?","bundle #","priority",
+      "number of structures ordered per bundle"
+    ];
+
+    // CSV-escape: wrap in quotes if value contains comma, quote, or newline
+    const esc = (v) => {
+      const s = String(v);
+      return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    };
+
+    const supplier = getSupplier();
+    const solution = isSolution();
+
+    const csvRows = [headers.map(esc).join(",")];
+    parsedRows.forEach(row => {
+      const salt   = SALTS[row.saltIndex];
+      const freeMW = row.freeMW !== null ? row.freeMW.toFixed(2) : "";
+      const shipMW = row.saltIndex === 0 ? ""
+                     : (row.freeMW !== null ? (row.freeMW + salt.delta).toFixed(2) : "");
+
+      const vals = [
+        detectedTarget, row.id, "", supplier, row.smiles, "",
+        freeMW, shipMW, "",
+        solution ? "10 mM" : "", solution ? "50" : "", "DMSO",
+        "", "", "", "", "", "", ""
+      ];
+      csvRows.push(vals.map(esc).join(","));
+    });
+
+    const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = `${detectedTarget}_submission.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast("CSV downloaded!");
+  });
 </script>
 
 </body>
