@@ -162,6 +162,8 @@
             <th>Vol.</th>
             <th>Qty</th>
             <th>Solvent</th>
+            <th>Binding Prob.</th>
+            <th>Binding Prob.</th>
           </tr>
         </thead>
         <tbody id="previewBody"></tbody>
@@ -274,7 +276,7 @@
     const lines = text.trim().split("\n");
     if (lines.length < 2) return [];
     const h = lines[0].split("\t").map(s => s.trim());
-    const mi = h.indexOf("Molecule"), ii = h.indexOf("Id"), ci = h.indexOf("Created By");
+    const mi = h.indexOf("Molecule"), ii = h.indexOf("Id"), ci = h.indexOf("Created By"), bi = h.indexOf("Binding Probability");
     if (mi === -1 || ii === -1) { alert("TSV must have 'Molecule' and 'Id' columns."); return []; }
 
     const rows = [];
@@ -282,11 +284,13 @@
       const c = lines[i].split("\t");
       if (c.length <= Math.max(mi, ii)) continue;
       const createdBy = ci !== -1 ? c[ci].trim() : "";
+      const bp = bi !== -1 && c[bi] ? parseFloat(c[bi].trim()) : null;
       rows.push({
         smiles: c[mi].trim(),
         id: c[ii].trim(),
         source: createdBy.toLowerCase().includes("solution") ? "solution" : "solid",
         sourceRaw: createdBy,
+        bindingProb: bp,
         freeMW: null, saltIndex: 0, canonSmiles: null,
         inSolution: false, inSolid: false, isDupe: false,
       });
@@ -405,6 +409,8 @@
         <td>${isSol ? "50" : ""}</td>
         <td>${isSol ? "" : "2"}</td>
         <td>DMSO</td>
+        <td>${row.bindingProb !== null ? row.bindingProb.toFixed(3) : "—"}</td>
+        <td>${row.bindingProb !== null ? row.bindingProb.toFixed(3) : "—"}</td>
       </tr>`;
     }).join("");
 
@@ -440,6 +446,9 @@
         isSol ? "10 mM" : "",
         isSol ? "50" : "",
         "DMSO",
+        "", "", "",                              // M: plate name, N: position, O: comment
+        "", "", "", "",                          // P–S: salt adduct, bundle, priority, structures
+        row.bindingProb !== null ? row.bindingProb.toFixed(4) : "",  // T: Binding Probability
       ].join("\t");
     });
     navigator.clipboard.writeText(lines.join("\n"))
@@ -455,7 +464,7 @@
       "concentration [mM]","volume [µl]","recommended solvent",
       "Original plate name","plate position","comment",
       "salt adduct?","bundle #","priority",
-      "number of structures ordered per bundle"
+      "number of structures ordered per bundle","Binding Probability"
     ];
     const esc = v => { const s = String(v); return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
 
@@ -473,7 +482,9 @@
         isSol ? "" : "2",
         isSol ? "10 mM" : "",
         isSol ? "50" : "",
-        "DMSO", "", "", "", "", "", "", ""
+        "DMSO", "", "", "",                       // plate name, position, comment
+        "", "", "", "",                            // salt adduct, bundle, priority, structures
+        row.bindingProb !== null ? row.bindingProb.toFixed(4) : "",
       ].map(esc).join(","));
     });
 
