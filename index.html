@@ -8,40 +8,47 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg:        #0f1117;
-      --surface:   #1a1d27;
-      --surface2:  #232733;
-      --border:    #2e3345;
-      --text:      #e2e4eb;
-      --text-dim:  #8b8fa3;
-      --accent:    #5b9cf5;
-      --accent-bg: rgba(91,156,245,0.08);
-      --green:     #4ade80;
-      --green-bg:  rgba(74,222,128,0.08);
-      --amber:     #f59e0b;
-      --amber-bg:  rgba(245,158,11,0.08);
-      --red:       #f87171;
-      --red-bg:    rgba(248,113,113,0.08);
-      --mono:      'JetBrains Mono', monospace;
-      --sans:      'DM Sans', system-ui, sans-serif;
-      --radius:    8px;
+      --bg: #0f1117; --surface: #1a1d27; --surface2: #232733; --border: #2e3345;
+      --text: #e2e4eb; --text-dim: #8b8fa3;
+      --accent: #5b9cf5; --accent-bg: rgba(91,156,245,0.08);
+      --green: #4ade80; --green-bg: rgba(74,222,128,0.08);
+      --amber: #f59e0b; --amber-bg: rgba(245,158,11,0.08);
+      --red: #f87171; --red-bg: rgba(248,113,113,0.08);
+      --violet: #a78bfa; --violet-bg: rgba(167,139,250,0.08);
+      --mono: 'JetBrains Mono', monospace; --sans: 'DM Sans', system-ui, sans-serif;
+      --radius: 8px;
     }
-
     body { font-family: var(--sans); background: var(--bg); color: var(--text); line-height: 1.55; min-height: 100vh; }
+    .app { max-width: 1500px; margin: 0 auto; padding: 2rem 2rem 4rem; }
 
-    .app { max-width: 1440px; margin: 0 auto; padding: 2rem 2rem 4rem; }
-
-    header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+    /* Header */
+    header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
     header .icon { width: 40px; height: 40px; background: var(--accent-bg); border: 1px solid rgba(91,156,245,0.2); border-radius: 10px; display: grid; place-items: center; font-size: 1.2rem; }
-    header h1 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em; }
+    header h1 { font-size: 1.25rem; font-weight: 600; }
     header p { color: var(--text-dim); font-size: 0.85rem; margin-top: 2px; }
 
+    /* Tabs */
+    .tabs { display: flex; gap: 0; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border); }
+    .tab { padding: 0.7rem 1.5rem; font-family: var(--sans); font-size: 0.9rem; font-weight: 600; background: none; border: none; color: var(--text-dim); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color 0.2s, border-color 0.2s; }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab.active-csv { color: var(--violet); border-bottom-color: var(--violet); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Status bars */
+    .status-bar { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; border-radius: var(--radius); font-size: 0.85rem; margin-bottom: 0.5rem; }
+    .status-bar.loading { background: var(--amber-bg); color: var(--amber); }
+    .status-bar.ready { background: var(--green-bg); color: var(--green); }
+    .status-bar.error { background: var(--red-bg); color: var(--red); }
+    .spinner { width: 14px; height: 14px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Controls */
     .controls { display: flex; gap: 1rem; align-items: stretch; flex-wrap: wrap; margin-top: 1rem; margin-bottom: 1.5rem; }
     .control-group { display: flex; flex-direction: column; gap: 6px; }
     .control-group label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); }
-
     .dropzone { flex: 1; min-width: 280px; border: 2px dashed var(--border); border-radius: var(--radius); background: var(--surface); padding: 1rem 1.5rem; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; transition: border-color 0.2s, background 0.2s; position: relative; }
     .dropzone:hover, .dropzone.dragover { border-color: var(--accent); background: var(--accent-bg); }
     .dropzone.has-file { border-style: solid; border-color: var(--green); background: var(--green-bg); }
@@ -49,52 +56,43 @@
     .dropzone .dz-icon { font-size: 1.4rem; }
     .dropzone .dz-text { font-size: 0.9rem; color: var(--text-dim); }
     .dropzone.has-file .dz-text { color: var(--green); }
-
     .info-box { font-family: var(--mono); font-size: 0.85rem; background: var(--accent-bg); color: var(--accent); border: 1px solid rgba(91,156,245,0.2); border-radius: var(--radius); padding: 0.6rem 1rem; min-width: 120px; display: flex; align-items: center; }
     .info-box.empty { color: var(--text-dim); background: var(--surface); border-color: var(--border); }
 
-    .status-bar { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; border-radius: var(--radius); font-size: 0.85rem; margin-bottom: 0.5rem; }
-    .status-bar.loading { background: var(--amber-bg); color: var(--amber); }
-    .status-bar.ready   { background: var(--green-bg); color: var(--green); }
-    .status-bar.error   { background: var(--red-bg); color: var(--red); }
-    .spinner { width: 14px; height: 14px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .table-wrapper { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+    /* Table */
+    .table-wrapper { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); max-height: 70vh; }
     table { width: 100%; border-collapse: collapse; font-size: 0.82rem; white-space: nowrap; }
-    thead th { position: sticky; top: 0; background: var(--surface2); font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); padding: 0.7rem 0.75rem; border-bottom: 1px solid var(--border); text-align: left; }
+    thead th { position: sticky; top: 0; z-index: 2; background: var(--surface2); font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); padding: 0.7rem 0.75rem; border-bottom: 1px solid var(--border); text-align: left; }
     tbody td { padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 0.78rem; }
     tbody tr:hover { background: rgba(91,156,245,0.03); }
     tbody tr:last-child td { border-bottom: none; }
-    .smiles-cell { max-width: 220px; overflow: hidden; text-overflow: ellipsis; cursor: help; }
-
+    .smiles-cell { max-width: 200px; overflow: hidden; text-overflow: ellipsis; cursor: help; }
     .salt-select { font-family: var(--sans); font-size: 0.78rem; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px; padding: 0.3rem 0.5rem; outline: none; cursor: pointer; }
     .salt-select:focus { border-color: var(--accent); }
     .mw-shipped { color: var(--accent); }
-    .mw-na      { color: var(--text-dim); font-style: italic; }
-
+    .mw-na { color: var(--text-dim); font-style: italic; }
     .stock-cell { text-align: center; font-size: 0.95rem; }
-    .stock-yes  { color: var(--green); font-weight: 700; }
-    .stock-no   { color: var(--red); font-weight: 700; }
-    .stock-pending { opacity: 0.5; }
-
+    .stock-yes { color: var(--green); font-weight: 700; }
+    .stock-no { color: var(--red); font-weight: 700; }
     .badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; font-family: var(--sans); font-size: 0.72rem; font-weight: 600; }
     .badge-solution { background: rgba(91,156,245,0.12); color: var(--accent); }
-    .badge-solid    { background: rgba(245,158,11,0.12); color: var(--amber); }
-
+    .badge-solid { background: rgba(245,158,11,0.12); color: var(--amber); }
     .row-duplicate { background: rgba(248,113,113,0.06); }
     .row-duplicate td { opacity: 0.45; text-decoration: line-through; }
     .row-duplicate .dupe-tag { opacity: 1; text-decoration: none; font-size: 1.1rem; }
     .row-not-in-stock { background: rgba(248,113,113,0.04); }
+    /* ADMET columns subtle style */
+    .admet-val { color: var(--violet); }
 
+    /* Buttons */
     .actions { display: flex; gap: 0.75rem; margin-top: 1.25rem; flex-wrap: wrap; }
     .btn { font-family: var(--sans); font-size: 0.85rem; font-weight: 600; padding: 0.65rem 1.5rem; border-radius: var(--radius); border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: opacity 0.15s, transform 0.1s; }
     .btn:active { transform: scale(0.97); }
     .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .btn-primary   { background: var(--accent); color: #fff; }
+    .btn-primary { background: var(--accent); color: #fff; }
     .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-    .btn-warning   { background: var(--amber); color: #000; }
-    .btn-danger    { background: var(--red); color: #fff; }
+    .btn-warning { background: var(--amber); color: #000; }
+    .btn-danger { background: var(--red); color: #fff; }
     .btn-primary:hover:not(:disabled) { opacity: 0.85; }
     .btn-secondary:hover:not(:disabled) { border-color: var(--text-dim); }
     .btn-warning:hover:not(:disabled) { opacity: 0.85; }
@@ -113,10 +111,11 @@
     <div class="icon">⚗️</div>
     <div>
       <h1>Submission Template Converter</h1>
-      <p>Convert candidate TSV exports into the crystallography submission format</p>
+      <p>Convert candidate exports into the crystallography submission format</p>
     </div>
   </header>
 
+  <!-- Status bars (shared) -->
   <div id="rdkitStatus" class="status-bar loading">
     <div class="spinner"></div><span>Loading RDKit molecular engine…</span>
   </div>
@@ -127,55 +126,84 @@
     <div class="spinner"></div><span>Waiting for RDKit to load Solid stock…</span>
   </div>
 
-  <div class="controls">
-    <div class="control-group" style="flex:1; min-width:280px;">
-      <label>TSV File</label>
-      <div class="dropzone" id="dropzone">
-        <span class="dz-icon">📄</span>
-        <span class="dz-text" id="dzText">Drop TSV file here or click to browse</span>
-        <input type="file" id="fileInput" accept=".tsv,.txt,.csv">
+  <!-- Tab bar -->
+  <div class="tabs">
+    <button class="tab active" data-tab="tsv">📄 TSV Import</button>
+    <button class="tab" data-tab="csv">📊 CSV Import (ADMET)</button>
+  </div>
+
+  <!-- ═══ TSV TAB ═══ -->
+  <div id="tab-tsv" class="tab-panel active">
+    <div class="controls">
+      <div class="control-group" style="flex:1; min-width:280px;">
+        <label>TSV File</label>
+        <div class="dropzone" id="dropzone-tsv">
+          <span class="dz-icon">📄</span>
+          <span class="dz-text" id="dzText-tsv">Drop TSV file here or click to browse</span>
+          <input type="file" id="fileInput-tsv" accept=".tsv,.txt">
+        </div>
+      </div>
+      <div class="control-group">
+        <label>Target (auto-detected)</label>
+        <div class="info-box empty" id="targetDisplay-tsv">—</div>
       </div>
     </div>
-    <div class="control-group">
-      <label>Target (auto-detected)</label>
-      <div class="info-box empty" id="targetDisplay">—</div>
+    <div id="preview-tsv" class="hidden">
+      <div class="table-wrapper"><table>
+        <thead><tr>
+          <th>#</th><th></th><th>Soln</th><th>Solid</th><th>Source</th>
+          <th>Target</th><th>cpd ID</th><th>Lot ID (SMILES)</th>
+          <th>MW Free</th><th>Salt Form</th><th>MW Ship</th>
+          <th>Conc.</th><th>Vol.</th><th>Qty</th><th>Solvent</th>
+          <th>Bind. Prob.</th>
+        </tr></thead>
+        <tbody id="tbody-tsv"></tbody>
+      </table></div>
+      <div class="row-count" id="rowCount-tsv"></div>
+      <div class="actions">
+        <button class="btn btn-warning"   id="scanBtn-tsv"  disabled>🔍 Scan for Duplicates</button>
+        <button class="btn btn-danger"    id="purgeBtn-tsv" disabled>🗑️ Remove 💩 Duplicates</button>
+        <button class="btn btn-primary"   id="copyBtn-tsv"  disabled>📋 Copy for Template</button>
+        <button class="btn btn-secondary" id="csvBtn-tsv"   disabled>💾 Export CSV</button>
+      </div>
     </div>
   </div>
 
-  <div id="previewSection" class="hidden">
-    <div class="table-wrapper">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th></th>
-            <th>In Soln</th>
-            <th>In Solid</th>
-            <th>Source</th>
-            <th>Target</th>
-            <th>cpd ID</th>
-            <th>Lot ID (SMILES)</th>
-            <th>MW Free [g/mol]</th>
-            <th>Salt Form</th>
-            <th>MW Shipped [g/mol]</th>
-            <th>Conc.</th>
-            <th>Vol.</th>
-            <th>Qty</th>
-            <th>Solvent</th>
-            <th>Binding Prob.</th>
-            <th>Binding Prob.</th>
-          </tr>
-        </thead>
-        <tbody id="previewBody"></tbody>
-      </table>
+  <!-- ═══ CSV TAB ═══ -->
+  <div id="tab-csv" class="tab-panel">
+    <div class="controls">
+      <div class="control-group" style="flex:1; min-width:280px;">
+        <label>CSV File (ADMET predictions)</label>
+        <div class="dropzone" id="dropzone-csv">
+          <span class="dz-icon">📊</span>
+          <span class="dz-text" id="dzText-csv">Drop CSV file here or click to browse</span>
+          <input type="file" id="fileInput-csv" accept=".csv">
+        </div>
+      </div>
+      <div class="control-group">
+        <label>Target (auto-detected)</label>
+        <div class="info-box empty" id="targetDisplay-csv">—</div>
+      </div>
     </div>
-    <div class="row-count" id="rowCount"></div>
-
-    <div class="actions">
-      <button class="btn btn-warning" id="scanDupesBtn" disabled>🔍 Scan for Duplicates</button>
-      <button class="btn btn-danger" id="purgeDupesBtn" disabled>🗑️ Remove 💩 Duplicates</button>
-      <button class="btn btn-primary" id="copyBtn" disabled>📋 Copy for Template</button>
-      <button class="btn btn-secondary" id="exportCsvBtn" disabled>💾 Export CSV</button>
+    <div id="preview-csv" class="hidden">
+      <div class="table-wrapper"><table>
+        <thead><tr>
+          <th>#</th><th></th><th>Soln</th><th>Solid</th><th>Source</th>
+          <th>Target</th><th>cpd ID</th><th>Lot ID (SMILES)</th>
+          <th>MW Free</th><th>Salt Form</th><th>MW Ship</th>
+          <th>Conc.</th><th>Vol.</th><th>Qty</th><th>Solvent</th>
+          <th>Bind. Prob.</th>
+          <th>LogD</th><th>LogS</th><th>Caco-2</th>
+        </tr></thead>
+        <tbody id="tbody-csv"></tbody>
+      </table></div>
+      <div class="row-count" id="rowCount-csv"></div>
+      <div class="actions">
+        <button class="btn btn-warning"   id="scanBtn-csv"  disabled>🔍 Scan for Duplicates</button>
+        <button class="btn btn-danger"    id="purgeBtn-csv" disabled>🗑️ Remove 💩 Duplicates</button>
+        <button class="btn btn-primary"   id="copyBtn-csv"  disabled>📋 Copy for Template</button>
+        <button class="btn btn-secondary" id="csvBtn-csv"   disabled>💾 Export CSV</button>
+      </div>
     </div>
   </div>
 </div>
@@ -183,6 +211,9 @@
 <div class="toast" id="toast"></div>
 
 <script>
+  // ══════════════════════════════════════════════════════════
+  //  SALTS
+  // ══════════════════════════════════════════════════════════
   const SALTS = [
     { name: "Free base",               delta: 0       },
     { name: "Hydrochloride (HCl)",      delta: 36.461  },
@@ -197,14 +228,23 @@
     { name: "Besylate",                 delta: 158.175 },
   ];
 
-  // ── State ──────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════
+  //  STATE — separate per tab
+  // ══════════════════════════════════════════════════════════
   let RDKitModule = null;
-  let parsedRows = [];
-  let detectedTarget = "";
-  let solutionSet = null;
-  let solidSet = null;
+  let solutionSet = null, solidSet = null;
 
-  // ── RDKit + Stock ──────────────────────────────────────
+  const state = {
+    tsv: { rows: [], target: "", mode: "tsv" },
+    csv: { rows: [], target: "", mode: "csv" },
+  };
+  // Row shape: { smiles, id, source, sourceRaw, bindingProb, freeMW, saltIndex,
+  //              canonSmiles, inSolution, inSolid, isDupe,
+  //              pred_logd, pred_logs, pred_caco }  (ADMET fields null for TSV)
+
+  // ══════════════════════════════════════════════════════════
+  //  RDKIT + STOCK
+  // ══════════════════════════════════════════════════════════
   const rdkitScript = document.createElement("script");
   rdkitScript.src = "https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.js";
   rdkitScript.onload = () => {
@@ -212,15 +252,15 @@
       RDKitModule = mod;
       updateStatusBar("rdkitStatus", "ready", "✓ RDKit ready");
       loadStockFiles();
-      if (parsedRows.length > 0) recalcAllMW();
+      ["tsv","csv"].forEach(m => { if (state[m].rows.length) recalcAll(m); });
     });
   };
   document.head.appendChild(rdkitScript);
 
   function loadStockFiles() {
     [
-      { file: "wuxi_ots_stock_canonical.txt",  label: "Solution", id: "stockSolutionStatus", set: s => solutionSet = s },
-      { file: "wuxi_ots_solid_canonical.txt",   label: "Solid",    id: "stockSolidStatus",    set: s => solidSet = s },
+      { file: "wuxi_ots_stock_canonical.txt", label: "Solution", id: "stockSolutionStatus", set: s => solutionSet = s },
+      { file: "wuxi_ots_solid_canonical.txt",  label: "Solid",    id: "stockSolidStatus",    set: s => solidSet = s },
     ].forEach(({ file, label, id, set: setter }) => {
       updateStatusBar(id, "loading", `Loading ${label} stock…`);
       fetch(file)
@@ -229,7 +269,7 @@
           const s = new Set(text.trim().split("\n"));
           setter(s);
           updateStatusBar(id, "ready", `✓ ${label} stock — ${s.size.toLocaleString()} compounds`);
-          if (parsedRows.length > 0) { checkAllStock(); renderTable(); }
+          ["tsv","csv"].forEach(m => { if (state[m].rows.length) { checkStock(m); render(m); } });
         })
         .catch(() => updateStatusBar(id, "error", `✗ ${label} stock file not found`));
     });
@@ -238,225 +278,262 @@
   function updateStatusBar(id, type, msg) {
     const el = document.getElementById(id);
     el.className = `status-bar ${type}`;
-    el.innerHTML = type === "loading"
-      ? `<div class="spinner"></div><span>${msg}</span>`
-      : `<span>${msg}</span>`;
+    el.innerHTML = type === "loading" ? `<div class="spinner"></div><span>${msg}</span>` : `<span>${msg}</span>`;
   }
 
-  // ── Helpers ────────────────────────────────────────────
-  function extractTarget(filename) {
-    const match = filename.match(/_([^_]+?)-(?:selected-|20\d\d)/i);
-    return match ? match[1] : "UNKNOWN";
+  // ══════════════════════════════════════════════════════════
+  //  CHEM HELPERS
+  // ══════════════════════════════════════════════════════════
+  function calcMW(smi)       { if (!RDKitModule) return null; try { const m = RDKitModule.get_mol(smi); if (!m) return null; const w = parseFloat(JSON.parse(m.get_descriptors()).exactmw); m.delete(); return isNaN(w)?null:w; } catch { return null; } }
+  function canonicalize(smi) { if (!RDKitModule) return null; try { const m = RDKitModule.get_mol(smi); if (!m) return null; const c = m.get_smiles(); m.delete(); return c; } catch { return null; } }
+
+  // ══════════════════════════════════════════════════════════
+  //  FILENAME → TARGET
+  // ══════════════════════════════════════════════════════════
+  function extractTargetTSV(fn) {
+    // candidates-...__TARGET-selected-... or candidates-...__TARGET-20XX...
+    const m = fn.match(/_([^_]+?)-(?:selected-|20\d\d)/i);
+    return m ? m[1] : "UNKNOWN";
   }
 
-  function calcMW(smiles) {
-    if (!RDKitModule) return null;
-    try {
-      const mol = RDKitModule.get_mol(smiles);
-      if (!mol) return null;
-      const mw = parseFloat(JSON.parse(mol.get_descriptors()).exactmw);
-      mol.delete();
-      return isNaN(mw) ? null : mw;
-    } catch { return null; }
+  function extractTargetCSV(fn) {
+    // target_admet_predictions.csv → target is everything before _admet
+    const m = fn.replace(/\.csv$/i, "").match(/^(.+?)_admet/i);
+    return m ? m[1].toUpperCase() : "UNKNOWN";
   }
 
-  function canonicalize(smiles) {
-    if (!RDKitModule) return null;
-    try {
-      const mol = RDKitModule.get_mol(smiles);
-      if (!mol) return null;
-      const c = mol.get_smiles();
-      mol.delete();
-      return c;
-    } catch { return null; }
+  // ══════════════════════════════════════════════════════════
+  //  SOURCE DETECTION — handles both "WuXi OTS" and "WuXi OTS Solid"
+  // ══════════════════════════════════════════════════════════
+  function detectSource(createdBy) {
+    const lc = createdBy.toLowerCase();
+    if (lc.includes("solution")) return "solution";
+    return "solid"; // "WuXi OTS" or "WuXi OTS Solid" both → solid
   }
 
-  // ── TSV Parsing ────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════
+  //  PARSING
+  // ══════════════════════════════════════════════════════════
+
+  // Simple CSV parser that handles quoted fields
+  function parseCSVLine(line) {
+    const result = []; let current = ""; let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (inQuotes) {
+        if (ch === '"' && line[i+1] === '"') { current += '"'; i++; }
+        else if (ch === '"') inQuotes = false;
+        else current += ch;
+      } else {
+        if (ch === '"') inQuotes = true;
+        else if (ch === ',') { result.push(current); current = ""; }
+        else current += ch;
+      }
+    }
+    result.push(current);
+    return result;
+  }
+
   function parseTSV(text) {
     const lines = text.trim().split("\n");
     if (lines.length < 2) return [];
     const h = lines[0].split("\t").map(s => s.trim());
-    const mi = h.indexOf("Molecule"), ii = h.indexOf("Id"), ci = h.indexOf("Created By"), bi = h.indexOf("Binding Probability");
+    const idx = k => h.indexOf(k);
+    const mi = idx("Molecule"), ii = idx("Id"), ci = idx("Created By"), bi = idx("Binding Probability");
     if (mi === -1 || ii === -1) { alert("TSV must have 'Molecule' and 'Id' columns."); return []; }
 
-    const rows = [];
-    for (let i = 1; i < lines.length; i++) {
-      const c = lines[i].split("\t");
-      if (c.length <= Math.max(mi, ii)) continue;
-      const createdBy = ci !== -1 ? c[ci].trim() : "";
-      const bp = bi !== -1 && c[bi] ? parseFloat(c[bi].trim()) : null;
-      rows.push({
-        smiles: c[mi].trim(),
-        id: c[ii].trim(),
-        source: createdBy.toLowerCase().includes("solution") ? "solution" : "solid",
-        sourceRaw: createdBy,
-        bindingProb: bp,
+    return lines.slice(1).filter(l => l.trim()).map(l => {
+      const c = l.split("\t");
+      const createdBy = ci !== -1 ? c[ci]?.trim() || "" : "";
+      return {
+        smiles: c[mi]?.trim() || "", id: c[ii]?.trim() || "",
+        source: detectSource(createdBy), sourceRaw: createdBy,
+        bindingProb: bi !== -1 && c[bi] ? parseFloat(c[bi]) : null,
         freeMW: null, saltIndex: 0, canonSmiles: null,
         inSolution: false, inSolid: false, isDupe: false,
-      });
-    }
-    return rows;
+        pred_logd: null, pred_logs: null, pred_caco: null,
+      };
+    }).filter(r => r.smiles && r.id);
   }
 
-  // ── MW + Stock Check ───────────────────────────────────
-  function recalcAllMW() {
-    parsedRows.forEach(r => {
+  function parseCSV(text) {
+    // Strip \r, split lines
+    const lines = text.replace(/\r/g, "").trim().split("\n");
+    if (lines.length < 2) return [];
+    const h = parseCSVLine(lines[0]).map(s => s.trim());
+    const idx = k => h.indexOf(k);
+    const mi = idx("Molecule"), ii = idx("Id"), ci = idx("Created By");
+    const bi = idx("Binding Probability");
+    const di = idx("pred_logd"), si = idx("pred_logs"), cai = idx("pred_caco");
+    if (mi === -1 || ii === -1) { alert("CSV must have 'Molecule' and 'Id' columns."); return []; }
+
+    return lines.slice(1).filter(l => l.trim()).map(l => {
+      const c = parseCSVLine(l);
+      const createdBy = ci !== -1 ? c[ci]?.trim() || "" : "";
+      return {
+        smiles: c[mi]?.trim() || "", id: c[ii]?.trim() || "",
+        source: detectSource(createdBy), sourceRaw: createdBy,
+        bindingProb: bi !== -1 && c[bi] ? parseFloat(c[bi]) : null,
+        freeMW: null, saltIndex: 0, canonSmiles: null,
+        inSolution: false, inSolid: false, isDupe: false,
+        pred_logd:  di !== -1 && c[di]  ? parseFloat(c[di])  : null,
+        pred_logs:  si !== -1 && c[si]  ? parseFloat(c[si])  : null,
+        pred_caco: cai !== -1 && c[cai] ? parseFloat(c[cai]) : null,
+      };
+    }).filter(r => r.smiles && r.id);
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  MW + STOCK (per mode)
+  // ══════════════════════════════════════════════════════════
+  function recalcAll(mode) {
+    state[mode].rows.forEach(r => {
       r.freeMW = calcMW(r.smiles);
       if (!r.canonSmiles) r.canonSmiles = canonicalize(r.smiles);
     });
-    checkAllStock();
-    renderTable();
+    checkStock(mode);
+    render(mode);
   }
 
-  function checkAllStock() {
+  function checkStock(mode) {
     if (!RDKitModule) return;
-    let sm = 0, sdm = 0;
-    parsedRows.forEach(r => {
+    state[mode].rows.forEach(r => {
       if (!r.canonSmiles) r.canonSmiles = canonicalize(r.smiles);
       r.inSolution = solutionSet && r.canonSmiles ? solutionSet.has(r.canonSmiles) : false;
       r.inSolid    = solidSet    && r.canonSmiles ? solidSet.has(r.canonSmiles)    : false;
-      if (r.inSolution) sm++;
-      if (r.inSolid) sdm++;
     });
-    if (solutionSet) updateStatusBar("stockSolutionStatus", "ready", `✓ Solution stock — ${sm}/${parsedRows.length} found`);
-    if (solidSet)    updateStatusBar("stockSolidStatus",    "ready", `✓ Solid stock — ${sdm}/${parsedRows.length} found`);
   }
 
-  // ── Duplicate Scanning ─────────────────────────────────
-  // Same canonical SMILES exists as both Solution AND Solid?
-  // → Tag the Solid row with 💩 (keep Solution)
-  function scanDuplicates() {
-    if (!RDKitModule) { showToast("RDKit not ready yet"); return; }
+  // ══════════════════════════════════════════════════════════
+  //  DUPLICATE SCAN + PURGE (per mode)
+  // ══════════════════════════════════════════════════════════
+  function scanDupes(mode) {
+    if (!RDKitModule) { showToast("RDKit not ready"); return; }
+    const rows = state[mode].rows;
+    rows.forEach(r => { if (!r.canonSmiles) r.canonSmiles = canonicalize(r.smiles); r.isDupe = false; });
 
-    parsedRows.forEach(r => {
-      if (!r.canonSmiles) r.canonSmiles = canonicalize(r.smiles);
-      r.isDupe = false; // reset
-    });
-
-    // Build map: canonical → { hasSolution, solidIndices }
     const map = new Map();
-    parsedRows.forEach((r, i) => {
+    rows.forEach((r, i) => {
       if (!r.canonSmiles) return;
-      if (!map.has(r.canonSmiles)) map.set(r.canonSmiles, { hasSolution: false, solidIndices: [] });
+      if (!map.has(r.canonSmiles)) map.set(r.canonSmiles, { hasSolution: false, solidIdx: [] });
       const e = map.get(r.canonSmiles);
       if (r.source === "solution") e.hasSolution = true;
-      else e.solidIndices.push(i);
+      else e.solidIdx.push(i);
     });
 
-    let dupeCount = 0;
-    map.forEach(e => {
-      if (e.hasSolution && e.solidIndices.length > 0) {
-        e.solidIndices.forEach(i => { parsedRows[i].isDupe = true; dupeCount++; });
-      }
-    });
+    let n = 0;
+    map.forEach(e => { if (e.hasSolution) e.solidIdx.forEach(i => { rows[i].isDupe = true; n++; }); });
 
-    document.getElementById("purgeDupesBtn").disabled = dupeCount === 0;
-    renderTable();
-    showToast(dupeCount > 0
-      ? `💩 ${dupeCount} solid duplicate${dupeCount > 1 ? "s" : ""} tagged`
-      : "No duplicates — all clean!");
+    document.getElementById(`purgeBtn-${mode}`).disabled = n === 0;
+    render(mode);
+    showToast(n > 0 ? `💩 ${n} solid duplicate${n>1?"s":""} tagged` : "No duplicates — all clean!");
   }
 
-  function purgeDuplicates() {
-    const before = parsedRows.length;
-    parsedRows = parsedRows.filter(r => !r.isDupe);
-    document.getElementById("purgeDupesBtn").disabled = true;
-    renderTable();
-    showToast(`Purged ${before - parsedRows.length} dupes → ${parsedRows.length} remaining`);
+  function purgeDupes(mode) {
+    const before = state[mode].rows.length;
+    state[mode].rows = state[mode].rows.filter(r => !r.isDupe);
+    document.getElementById(`purgeBtn-${mode}`).disabled = true;
+    render(mode);
+    showToast(`Purged ${before - state[mode].rows.length} → ${state[mode].rows.length} remaining`);
   }
 
-  // ── Render ─────────────────────────────────────────────
-  function renderTable() {
-    const tbody = document.getElementById("previewBody");
+  // ══════════════════════════════════════════════════════════
+  //  RENDER TABLE (per mode)
+  // ══════════════════════════════════════════════════════════
+  function render(mode) {
+    const rows = state[mode].rows;
+    const target = state[mode].target;
+    const hasADMET = mode === "csv";
+    const tbody = document.getElementById(`tbody-${mode}`);
 
-    tbody.innerHTML = parsedRows.map((row, i) => {
+    tbody.innerHTML = rows.map((row, i) => {
       const isSol = row.source === "solution";
-      const freeMW = row.freeMW !== null ? row.freeMW.toFixed(2) : "—";
+      const fmw = row.freeMW !== null ? row.freeMW.toFixed(2) : "—";
       const salt = SALTS[row.saltIndex];
-      const shipped = row.saltIndex === 0
-        ? '<span class="mw-na">—</span>'
+      const smw = row.saltIndex === 0 ? '<span class="mw-na">—</span>'
         : (row.freeMW !== null ? `<span class="mw-shipped">${(row.freeMW + salt.delta).toFixed(2)}</span>` : "—");
+      const solI = !solutionSet ? '⏳' : row.inSolution ? '<span class="stock-yes">✓</span>' : '<span class="stock-no">✗</span>';
+      const sldI = !solidSet    ? '⏳' : row.inSolid    ? '<span class="stock-yes">✓</span>' : '<span class="stock-no">✗</span>';
+      const notIn = (solutionSet && !row.inSolution) && (solidSet && !row.inSolid);
+      const saltOpts = SALTS.map((s,si) => `<option value="${si}" ${si===row.saltIndex?"selected":""}>${s.name}</option>`).join("");
+      const badge = isSol ? '<span class="badge badge-solution">Solution</span>' : '<span class="badge badge-solid">Solid</span>';
+      let cls = row.isDupe ? "row-duplicate" : notIn ? "row-not-in-stock" : "";
 
-      const solIcon = !solutionSet ? '⏳' : row.inSolution ? '<span class="stock-yes">✓</span>' : '<span class="stock-no">✗</span>';
-      const sldIcon = !solidSet    ? '⏳' : row.inSolid    ? '<span class="stock-yes">✓</span>' : '<span class="stock-no">✗</span>';
-      const notInEither = (solutionSet && !row.inSolution) && (solidSet && !row.inSolid);
-
-      const saltOpts = SALTS.map((s, si) =>
-        `<option value="${si}" ${si === row.saltIndex ? "selected" : ""}>${s.name}</option>`
-      ).join("");
-
-      const badge = isSol
-        ? '<span class="badge badge-solution">Solution</span>'
-        : '<span class="badge badge-solid">Solid</span>';
-
-      let cls = "";
-      if (row.isDupe) cls = "row-duplicate";
-      else if (notInEither) cls = "row-not-in-stock";
+      let admetCells = "";
+      if (hasADMET) {
+        const fmt = v => v !== null ? `<span class="admet-val">${v.toFixed(2)}</span>` : "—";
+        admetCells = `<td>${fmt(row.pred_logd)}</td><td>${fmt(row.pred_logs)}</td><td>${fmt(row.pred_caco)}</td>`;
+      }
 
       return `<tr class="${cls}">
-        <td style="color:var(--text-dim)">${i + 1}</td>
-        <td class="dupe-tag">${row.isDupe ? "💩" : ""}</td>
-        <td class="stock-cell">${solIcon}</td>
-        <td class="stock-cell">${sldIcon}</td>
-        <td>${badge}</td>
-        <td>${detectedTarget}</td>
-        <td>${row.id}</td>
+        <td style="color:var(--text-dim)">${i+1}</td>
+        <td class="dupe-tag">${row.isDupe?"💩":""}</td>
+        <td class="stock-cell">${solI}</td><td class="stock-cell">${sldI}</td>
+        <td>${badge}</td><td>${target}</td><td>${row.id}</td>
         <td class="smiles-cell" title="${row.smiles}">${row.smiles}</td>
-        <td>${freeMW}</td>
-        <td><select class="salt-select" data-row="${i}" onchange="onSaltChange(this)">${saltOpts}</select></td>
-        <td>${shipped}</td>
-        <td>${isSol ? "10 mM" : ""}</td>
-        <td>${isSol ? "50" : ""}</td>
-        <td>${isSol ? "" : "2"}</td>
-        <td>DMSO</td>
+        <td>${fmw}</td>
+        <td><select class="salt-select" data-mode="${mode}" data-row="${i}" onchange="onSaltChange(this)">${saltOpts}</select></td>
+        <td>${smw}</td>
+        <td>${isSol?"10 mM":""}</td><td>${isSol?"50":""}</td><td>${isSol?"":"2"}</td><td>DMSO</td>
         <td>${row.bindingProb !== null ? row.bindingProb.toFixed(3) : "—"}</td>
-        <td>${row.bindingProb !== null ? row.bindingProb.toFixed(3) : "—"}</td>
+        ${admetCells}
       </tr>`;
     }).join("");
 
-    const active = parsedRows.filter(r => !r.isDupe).length;
-    const dupes  = parsedRows.filter(r =>  r.isDupe).length;
-    let t = `${parsedRows.length} compounds`;
+    const active = rows.filter(r => !r.isDupe).length;
+    const dupes  = rows.filter(r =>  r.isDupe).length;
+    let t = `${rows.length} compounds`;
     if (dupes > 0) t += ` · 💩 ${dupes} tagged · ${active} clean`;
-    document.getElementById("rowCount").textContent = t;
+    document.getElementById(`rowCount-${mode}`).textContent = t;
 
-    document.getElementById("copyBtn").disabled = false;
-    document.getElementById("exportCsvBtn").disabled = false;
-    document.getElementById("scanDupesBtn").disabled = false;
+    ["scanBtn","copyBtn","csvBtn"].forEach(b => document.getElementById(`${b}-${mode}`).disabled = false);
   }
 
   function onSaltChange(el) {
-    parsedRows[parseInt(el.dataset.row)].saltIndex = parseInt(el.value);
-    renderTable();
+    const mode = el.dataset.mode, idx = parseInt(el.dataset.row);
+    state[mode].rows[idx].saltIndex = parseInt(el.value);
+    render(mode);
   }
 
-  // ── Clipboard (clean rows only) ────────────────────────
-  function copyToClipboard() {
-    const clean = parsedRows.filter(r => !r.isDupe);
+  // ══════════════════════════════════════════════════════════
+  //  CLIPBOARD (clean rows, per mode)
+  // ══════════════════════════════════════════════════════════
+  function copyToClip(mode) {
+    const target = state[mode].target;
+    const hasADMET = mode === "csv";
+    const clean = state[mode].rows.filter(r => !r.isDupe);
+
     const lines = clean.map(row => {
       const isSol = row.source === "solution";
       const salt = SALTS[row.saltIndex];
       const fm = row.freeMW !== null ? row.freeMW.toFixed(2) : "";
       const sm = row.saltIndex === 0 ? "" : (row.freeMW !== null ? (row.freeMW + salt.delta).toFixed(2) : "");
-      return [
-        detectedTarget, row.id, "",
-        isSol ? "WuXi OTS Solution" : "WuXi OTS Solid",
-        row.smiles, "", fm, sm,
-        isSol ? "" : "2",
-        isSol ? "10 mM" : "",
-        isSol ? "50" : "",
-        "DMSO",
-        "", "", "",                              // M: plate name, N: position, O: comment
-        "", "", "", "",                          // P–S: salt adduct, bundle, priority, structures
-        row.bindingProb !== null ? row.bindingProb.toFixed(4) : "",  // T: Binding Probability
-      ].join("\t");
+      const supplier = isSol ? "WuXi OTS Solution" : "WuXi OTS Solid";
+
+      const cols = [
+        target, row.id, "", supplier, row.smiles, "", fm, sm,
+        isSol ? "" : "2", isSol ? "10 mM" : "", isSol ? "50" : "", "DMSO",
+        "", "", "", "", "", "", "",
+        row.bindingProb !== null ? row.bindingProb.toFixed(4) : "",
+      ];
+      if (hasADMET) {
+        cols.push(row.pred_logd !== null ? row.pred_logd.toFixed(4) : "");
+        cols.push(row.pred_logs !== null ? row.pred_logs.toFixed(4) : "");
+        cols.push(row.pred_caco !== null ? row.pred_caco.toFixed(4) : "");
+      }
+      return cols.join("\t");
     });
-    navigator.clipboard.writeText(lines.join("\n"))
-      .then(() => showToast(`${clean.length} rows copied (dupes excluded)`));
+    navigator.clipboard.writeText(lines.join("\n")).then(() => showToast(`${clean.length} rows copied`));
   }
 
-  // ── CSV Export (clean rows only) ───────────────────────
-  function exportCSV() {
+  // ══════════════════════════════════════════════════════════
+  //  CSV EXPORT (clean rows, per mode)
+  // ══════════════════════════════════════════════════════════
+  function exportCSV(mode) {
+    const target = state[mode].target;
+    const hasADMET = mode === "csv";
+    const clean = state[mode].rows.filter(r => !r.isDupe);
+
     const headers = [
       "Target","cpd ID","crelux code","supplier","lot ID",
       "container ID","molecular weight of free compound [g/mol]",
@@ -464,80 +541,103 @@
       "concentration [mM]","volume [µl]","recommended solvent",
       "Original plate name","plate position","comment",
       "salt adduct?","bundle #","priority",
-      "number of structures ordered per bundle","Binding Probability"
+      "number of structures ordered per bundle","Binding Probability",
     ];
-    const esc = v => { const s = String(v); return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    if (hasADMET) headers.push("pred_logd", "pred_logs", "pred_caco");
 
-    const clean = parsedRows.filter(r => !r.isDupe);
+    const esc = v => { const s = String(v); return /[",\n\r]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; };
+
     const csvRows = [headers.map(esc).join(",")];
     clean.forEach(row => {
       const isSol = row.source === "solution";
       const salt = SALTS[row.saltIndex];
       const fm = row.freeMW !== null ? row.freeMW.toFixed(2) : "";
       const sm = row.saltIndex === 0 ? "" : (row.freeMW !== null ? (row.freeMW + salt.delta).toFixed(2) : "");
-      csvRows.push([
-        detectedTarget, row.id, "",
-        isSol ? "WuXi OTS Solution" : "WuXi OTS Solid",
-        row.smiles, "", fm, sm,
-        isSol ? "" : "2",
-        isSol ? "10 mM" : "",
-        isSol ? "50" : "",
-        "DMSO", "", "", "",                       // plate name, position, comment
-        "", "", "", "",                            // salt adduct, bundle, priority, structures
+      const supplier = isSol ? "WuXi OTS Solution" : "WuXi OTS Solid";
+
+      const cols = [
+        target, row.id, "", supplier, row.smiles, "", fm, sm,
+        isSol ? "" : "2", isSol ? "10 mM" : "", isSol ? "50" : "", "DMSO",
+        "", "", "", "", "", "", "",
         row.bindingProb !== null ? row.bindingProb.toFixed(4) : "",
-      ].map(esc).join(","));
+      ];
+      if (hasADMET) {
+        cols.push(row.pred_logd !== null ? row.pred_logd.toFixed(4) : "");
+        cols.push(row.pred_logs !== null ? row.pred_logs.toFixed(4) : "");
+        cols.push(row.pred_caco !== null ? row.pred_caco.toFixed(4) : "");
+      }
+      csvRows.push(cols.map(esc).join(","));
     });
 
     const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `${detectedTarget}_submission.csv`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+    a.download = `${target}_submission.csv`; a.click(); URL.revokeObjectURL(a.href);
     showToast(`CSV exported — ${clean.length} compounds`);
   }
 
-  // ── File Handling ──────────────────────────────────────
-  function handleFile(file) {
+  // ══════════════════════════════════════════════════════════
+  //  FILE HANDLING
+  // ══════════════════════════════════════════════════════════
+  function handleFile(file, mode) {
     if (!file) return;
-    document.getElementById("dzText").textContent = file.name;
-    document.getElementById("dropzone").classList.add("has-file");
+    const dz = document.getElementById(`dropzone-${mode}`);
+    document.getElementById(`dzText-${mode}`).textContent = file.name;
+    dz.classList.add("has-file");
 
-    detectedTarget = extractTarget(file.name);
-    const te = document.getElementById("targetDisplay");
-    te.textContent = detectedTarget;
-    te.classList.toggle("empty", detectedTarget === "UNKNOWN");
+    // Detect target
+    const target = mode === "tsv" ? extractTargetTSV(file.name) : extractTargetCSV(file.name);
+    state[mode].target = target;
+    const te = document.getElementById(`targetDisplay-${mode}`);
+    te.textContent = target; te.classList.toggle("empty", target === "UNKNOWN");
 
-    document.getElementById("purgeDupesBtn").disabled = true;
+    document.getElementById(`purgeBtn-${mode}`).disabled = true;
 
     const reader = new FileReader();
     reader.onload = e => {
-      parsedRows = parseTSV(e.target.result);
-      if (!parsedRows.length) return;
-      if (RDKitModule) recalcAllMW(); else renderTable();
-      document.getElementById("previewSection").classList.remove("hidden");
+      state[mode].rows = mode === "tsv" ? parseTSV(e.target.result) : parseCSV(e.target.result);
+      if (!state[mode].rows.length) return;
+      if (RDKitModule) recalcAll(mode); else render(mode);
+      document.getElementById(`preview-${mode}`).classList.remove("hidden");
     };
     reader.readAsText(file);
   }
 
+  // ══════════════════════════════════════════════════════════
+  //  TABS
+  // ══════════════════════════════════════════════════════════
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active", "active-csv"));
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      const id = tab.dataset.tab;
+      tab.classList.add("active" + (id === "csv" ? "-csv" : ""));
+      document.getElementById(`tab-${id}`).classList.add("active");
+    });
+  });
+
+  // ══════════════════════════════════════════════════════════
+  //  EVENTS
+  // ══════════════════════════════════════════════════════════
   function showToast(msg) {
     const t = document.getElementById("toast");
-    t.textContent = msg;
-    t.classList.add("show");
+    t.textContent = msg; t.classList.add("show");
     setTimeout(() => t.classList.remove("show"), 2500);
   }
 
-  // ── Events ─────────────────────────────────────────────
-  document.getElementById("fileInput").addEventListener("change", e => handleFile(e.target.files[0]));
-  const dz = document.getElementById("dropzone");
-  dz.addEventListener("dragover", e => { e.preventDefault(); dz.classList.add("dragover"); });
-  dz.addEventListener("dragleave", () => dz.classList.remove("dragover"));
-  dz.addEventListener("drop", e => { e.preventDefault(); dz.classList.remove("dragover"); handleFile(e.dataTransfer.files[0]); });
+  // Wire up both tabs
+  ["tsv", "csv"].forEach(mode => {
+    const fi = document.getElementById(`fileInput-${mode}`);
+    const dz = document.getElementById(`dropzone-${mode}`);
+    fi.addEventListener("change", e => handleFile(e.target.files[0], mode));
+    dz.addEventListener("dragover", e => { e.preventDefault(); dz.classList.add("dragover"); });
+    dz.addEventListener("dragleave", () => dz.classList.remove("dragover"));
+    dz.addEventListener("drop", e => { e.preventDefault(); dz.classList.remove("dragover"); handleFile(e.dataTransfer.files[0], mode); });
 
-  document.getElementById("scanDupesBtn").addEventListener("click", scanDuplicates);
-  document.getElementById("purgeDupesBtn").addEventListener("click", purgeDuplicates);
-  document.getElementById("copyBtn").addEventListener("click", copyToClipboard);
-  document.getElementById("exportCsvBtn").addEventListener("click", exportCSV);
+    document.getElementById(`scanBtn-${mode}`).addEventListener("click",  () => scanDupes(mode));
+    document.getElementById(`purgeBtn-${mode}`).addEventListener("click", () => purgeDupes(mode));
+    document.getElementById(`copyBtn-${mode}`).addEventListener("click",  () => copyToClip(mode));
+    document.getElementById(`csvBtn-${mode}`).addEventListener("click",   () => exportCSV(mode));
+  });
 </script>
 
 </body>
